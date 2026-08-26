@@ -1,0 +1,10 @@
+<div id="chat-widget">
+  <div class="chat-header" aria-label="Chat">
+    <span class="header-line"></span>
+    <span class="header-title">CHAT</span>
+    <span class="header-line"></span>
+  </div>
+
+  <div id="test-badge">TEST MODE</div>
+  <div id="log" class="chat-log" aria-live="polite"></div>
+</div>

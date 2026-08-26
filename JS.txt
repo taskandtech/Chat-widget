@@ -1,0 +1,188 @@
+/* =========================================
+   CHAT SETTINGS
+   ========================================= */
+const TEST_MODE = true;
+const TEST_LOOP = true;
+const TEST_INTERVAL = 2600;
+const MAX_MESSAGES = 6;
+const MESSAGE_LIFETIME = 0; // Milliseconds. Use 0 to keep messages until trimmed.
+const log = document.getElementById("log");
+const testBadge = document.getElementById("test-badge");
+/* =========================================
+   HELPERS
+   ========================================= */
+function escapeHtml(value = "") {
+  return String(value).replace(/[&<>"']/g, character => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "\"": "&quot;",
+    "'": "&#039;"
+  })[character]);
+}
+function currentTime() {
+  return new Date().toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
+function normalizeBadges(badges) {
+  if (Array.isArray(badges)) return badges;
+  if (badges && typeof badges === "object") {
+    return Object.keys(badges).map(type => ({ type }));
+  }
+  return [];
+}
+function roleFromBadges(badges) {
+  const badgeNames = normalizeBadges(badges).map(badge =>
+    String(badge?.type || badge?.name || badge).toLowerCase()
+  );
+  if (badgeNames.some(name => name.includes("broadcaster"))) return "broadcaster";
+  if (badgeNames.some(name => name.includes("moderator"))) return "moderator";
+  if (badgeNames.some(name => name.includes("vip"))) return "vip";
+  if (badgeNames.some(name => name.includes("subscriber"))) return "subscriber";
+  return "regular";
+}
+function roleLabel(role) {
+  return {
+    broadcaster: "STREAMER",
+    moderator: "MOD",
+    vip: "VIP",
+    subscriber: "SUB",
+    regular: "CHAT"
+  }[role] || "CHAT";
+}
+function roleIcon(role) {
+  return {
+    broadcaster: "☾",
+    moderator: "✦",
+    vip: "♢",
+    subscriber: "❀",
+    regular: "✧"
+  }[role] || "✧";
+}
+/* =========================================
+   MESSAGE DISPLAY
+   ========================================= */
+function removeMessage(row) {
+  if (!row || row.classList.contains("exit")) return;
+  row.classList.add("exit");
+  window.setTimeout(() => row.remove(), 360);
+}
+function trimMessages() {
+  const rows = [...log.querySelectorAll(".message-row:not(.exit)")];
+  while (rows.length > MAX_MESSAGES) {
+    removeMessage(rows.shift());
+  }
+}
+function addMessage({
+  name = "Viewer",
+  message = "",
+  badges = [],
+  time = currentTime(),
+  messageId = "",
+  userId = ""
+}) {
+  const role = roleFromBadges(badges);
+  const row = document.createElement("article");
+  row.className = `message-row role-${role} enter`;
+  row.setAttribute("data-message-id", String(messageId || ""));
+  row.setAttribute("data-user-id", String(userId || ""));
+  row.innerHTML = `
+    <div class="message-art" aria-hidden="true"></div>
+    <div class="message-shade" aria-hidden="true"></div>
+    <div class="role-icon" aria-hidden="true">${roleIcon(role)}</div>
+    <div class="role-divider" aria-hidden="true"></div>
+    <div class="message-content">
+      <div class="message-meta">
+        <span class="username-text">${escapeHtml(name)}</span>
+        <span class="role-label">${roleLabel(role)}</span>
+        <time class="timestamp">${escapeHtml(time)}</time>
+      </div>
+      <div class="message-text">${escapeHtml(message)}</div>
+    </div>
+  `;
+  log.appendChild(row);
+  trimMessages();
+  if (MESSAGE_LIFETIME > 0) {
+    window.setTimeout(() => removeMessage(row), MESSAGE_LIFETIME);
+  }
+}
+/* =========================================
+   STREAM ELEMENTS EVENTS
+   ========================================= */
+window.addEventListener("onWidgetLoad", event => {
+  const channel = event?.detail?.channel;
+  console.log("Moonlit chat widget loaded", channel?.username || channel?.id || "");
+  if (testBadge) {
+    testBadge.style.display = TEST_MODE ? "block" : "none";
+  }
+});
+window.addEventListener("onEventReceived", event => {
+  if (TEST_MODE) return;
+  const detail = event?.detail || {};
+  const listener = detail.listener;
+  const payload = detail.event || {};
+  if (listener === "message") {
+    const data = payload.data || payload;
+    addMessage({
+      name: data.displayName || data.nick || data.name || "Viewer",
+      message: data.text || data.message || "",
+      badges: data.badges,
+      messageId: data.msgId || data.messageId || data.id,
+      userId: data.userId || data.userid
+    });
+    return;
+  }
+  if (listener === "delete-message") {
+    const messageId = payload.msgId || payload.data?.msgId;
+    const row = [...log.querySelectorAll(".message-row")].find(
+      item => item.getAttribute("data-message-id") === String(messageId || "")
+    );
+    removeMessage(row);
+    return;
+  }
+  if (listener === "delete-messages") {
+    const userId = payload.userId || payload.data?.userId;
+    [...log.querySelectorAll(".message-row")]
+      .filter(item => item.getAttribute("data-user-id") === String(userId || ""))
+      .forEach(removeMessage);
+  }
+});
+/* =========================================
+   OPTIONAL TEST MESSAGES
+   ========================================= */
+const testMessages = [
+  {
+    name: "MoonlitMuse",
+    badges: [{ type: "broadcaster" }],
+    message: "Welcome to the pavilion—make yourself at home."
+  },
+  {
+    name: "CherryBlossom",
+    badges: [{ type: "subscriber" }],
+    message: "This moonlit chat design is absolutely gorgeous!"
+  },
+  {
+    name: "NightGarden",
+    badges: [{ type: "vip" }],
+    message: "The flowers and reflections look so pretty together."
+  },
+  {
+    name: "LanternKeeper",
+    badges: [{ type: "moderator" }],
+    message: "Chat is open ✦ Please be kind to one another."
+  }
+];
+if (TEST_MODE) {
+  let testIndex = 0;
+  const showNextTest = () => {
+    addMessage(testMessages[testIndex % testMessages.length]);
+    testIndex += 1;
+  };
+  showNextTest();
+  showNextTest();
+  if (TEST_LOOP) {
+    window.setInterval(showNextTest, TEST_INTERVAL);
+  }
+}
