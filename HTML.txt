@@ -3,8 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Moonlit Chat Widget</title>
+  <title>Moonlit Chat Widget — Demo</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* Demo-only backdrop so the widget is visible outside OBS/StreamElements.
+       This does not affect the actual widget styling in style.css. */
+    body {
+      background: radial-gradient(circle at 50% 30%, #2b1f33 0%, #100b16 70%) !important;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      min-height: 100vh;
+    }
+  </style>
 </head>
 <body>
 
