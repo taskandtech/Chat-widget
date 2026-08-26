@@ -1,10 +1,24 @@
-<div id="chat-widget">
-  <div class="chat-header" aria-label="Chat">
-    <span class="header-line"></span>
-    <span class="header-title">CHAT</span>
-    <span class="header-line"></span>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moonlit Chat Widget</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="chat-widget">
+    <div class="chat-header" aria-label="Chat">
+      <span class="header-line"></span>
+      <span class="header-title">CHAT</span>
+      <span class="header-line"></span>
+    </div>
+
+    <div id="test-badge">TEST MODE</div>
+    <div id="log" class="chat-log" aria-live="polite"></div>
   </div>
 
-  <div id="test-badge">TEST MODE</div>
-  <div id="log" class="chat-log" aria-live="polite"></div>
-</div>
+  <script src="script.js"></script>
+</body>
+</html>
